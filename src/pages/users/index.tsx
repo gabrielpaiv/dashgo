@@ -20,28 +20,33 @@ import { Header } from '../../components/Header'
 import { Pagination } from '../../components/Pagination'
 import { Sidebar } from '../../components/Sidebar'
 import Link from 'next/link'
-import { useEffect } from 'react'
 import { useQuery } from 'react-query'
+import { api } from '../../services/api'
 
 export default function UserList() {
-  const { data, isLoading, error } = useQuery('users', async () => {
-    const response = await fetch('https://localhost:3000/api/users')
-    const data = await response.json()
+  const { data, isLoading, error, isFetching } = useQuery(
+    'users',
+    async () => {
+      const { data } = await api.get('/users')
 
-    const users = data.users.map(user => {
-      return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        createdAt: new Date(user.createdAt).toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: 'long',
-          year: 'numeric'
-        })
-      }
-    })
-    return users
-  })
+      const users = data.users.map(user => {
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          createdAt: new Date(user.createdAt).toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+          })
+        }
+      })
+      return users
+    },
+    {
+      staleTime: 1000 * 5
+    }
+  )
 
   const isWider = useBreakpointValue({
     base: false,
@@ -58,6 +63,9 @@ export default function UserList() {
           <Flex mb="8" justify="space-between" align="center">
             <Heading size="lg" fontWeight="normal">
               Usuários
+              {!isLoading && isFetching && (
+                <Spinner size="sm" color="gray.500" ml="4" />
+              )}
             </Heading>
             <Link href="/users/create" passHref>
               <Button
